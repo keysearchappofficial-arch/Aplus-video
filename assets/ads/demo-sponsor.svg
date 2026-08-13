@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="240" viewBox="0 0 1200 240" role="img" aria-labelledby="title desc">
+  <title id="title">Demo Sponsor Advertisement</title>
+  <desc id="desc">A simple green sponsor image used to test the Aplus image advertisement slot.</desc>
+  <rect width="1200" height="240" fill="#f6f6f3"/>
+  <rect x="24" y="24" width="1152" height="192" fill="#004d39"/>
+  <text x="600" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#ffffff" letter-spacing="4">DEMO SPONSOR</text>
+  <text x="600" y="154" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#dce9e4">Replace this file with an approved advertisement asset</text>
+</svg>
+
