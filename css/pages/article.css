@@ -1,0 +1,263 @@
+.article-page {
+  padding: 62px 0 88px;
+}
+
+.article-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 720px) minmax(240px, 280px);
+  gap: clamp(40px, 5vw, 58px);
+  justify-content: center;
+  align-items: start;
+}
+
+.article-main {
+  min-width: 0;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 30px;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.breadcrumb a:hover {
+  color: var(--color-primary);
+}
+
+.article-header {
+  margin-bottom: 30px;
+}
+
+.article-header .article-category {
+  margin-bottom: 14px;
+}
+
+.article-header h1 {
+  margin: 0 0 18px;
+  font-size: clamp(2.15rem, 4.2vw, 3.35rem);
+  line-height: 1.25;
+}
+
+.article-lead {
+  margin-bottom: 20px;
+  color: var(--color-text-soft);
+  font-size: 1.12rem;
+  line-height: 1.75;
+}
+
+.article-hero {
+  aspect-ratio: 16 / 9;
+  margin-bottom: 42px;
+  overflow: hidden;
+  background: var(--color-bg-muted);
+}
+
+.article-hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.article-content {
+  color: #2f3431;
+  font-size: 17.5px;
+  line-height: 1.86;
+}
+
+.article-content p {
+  margin-bottom: 1.35em;
+  color: inherit;
+}
+
+.article-content h2 {
+  margin: 2.1em 0 0.7em;
+  font-size: 1.7rem;
+  line-height: 1.4;
+}
+
+.article-content h3 {
+  margin: 1.7em 0 0.55em;
+  font-size: 1.28rem;
+}
+
+.article-content ul,
+.article-content ol {
+  margin: 0 0 1.5em;
+  padding-left: 1.4em;
+}
+
+.article-content li {
+  margin-bottom: 0.45em;
+}
+
+.article-content strong {
+  color: var(--color-text);
+}
+
+.article-content a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.article-content blockquote {
+  margin: 2em 0;
+  padding: 4px 0 4px 22px;
+  border-left: 2px solid var(--color-primary);
+  color: var(--color-text-soft);
+  font-size: 1.02em;
+}
+
+.article-content img {
+  width: 100%;
+  margin: 2em 0;
+}
+
+.article-content pre {
+  margin: 1.8em 0;
+  padding: 18px 20px;
+  overflow-x: auto;
+  color: #f6f6f3;
+  background: #1e2522;
+  font-size: 0.85em;
+  line-height: 1.65;
+}
+
+.article-content code {
+  font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+}
+
+.article-sidebar {
+  position: sticky;
+  top: calc(var(--header-height) + 34px);
+  display: grid;
+  gap: 40px;
+}
+
+.sidebar-block {
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.sidebar-block h2 {
+  margin: 0 0 16px;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  letter-spacing: 0;
+}
+
+.sidebar-tool strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.95rem;
+}
+
+.sidebar-tool p {
+  margin-bottom: 10px;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.text-link {
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.related-list {
+  display: grid;
+  gap: 16px;
+}
+
+.related-item {
+  display: grid;
+  grid-template-columns: 74px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.related-item img {
+  width: 74px;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.related-item span {
+  font-size: 0.79rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.related-item:hover span {
+  color: var(--color-primary);
+}
+
+.article-mobile-extras {
+  display: none;
+}
+
+.article-not-found {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 80px 0;
+}
+
+.article-not-found h1 {
+  font-size: 2rem;
+}
+
+@media (max-width: 860px) {
+  .article-layout {
+    grid-template-columns: minmax(0, 720px);
+  }
+
+  .article-sidebar {
+    display: none;
+  }
+
+  .article-mobile-extras {
+    display: grid;
+    gap: 36px;
+    margin-top: 56px;
+  }
+}
+
+@media (max-width: 639px) {
+  .article-page {
+    padding: 38px 0 64px;
+  }
+
+  .breadcrumb {
+    margin-bottom: 24px;
+  }
+
+  .article-header h1 {
+    font-size: 2rem;
+  }
+
+  .article-lead {
+    font-size: 1rem;
+  }
+
+  .article-hero {
+    margin-bottom: 32px;
+  }
+
+  .article-content {
+    font-size: 17px;
+    line-height: 1.82;
+  }
+
+  .article-content h2 {
+    font-size: 1.45rem;
+  }
+
+  .article-content h3 {
+    font-size: 1.18rem;
+  }
+}
+
