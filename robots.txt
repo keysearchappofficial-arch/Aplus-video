@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /scripts/
+
+Sitemap: https://www.keysearch-app.com/sitemap.xml
