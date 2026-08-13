@@ -1,0 +1,16 @@
+{
+  "title": "範例文章標題",
+  "slug": "example-article-slug",
+  "category": "科技",
+  "description": "用一段清楚的文字說明這篇文章會解決什麼問題。",
+  "lead": "文章標題下方的簡短導讀。",
+  "coverImage": "assets/images/solutions/example.jpg",
+  "coverAlt": "封面圖片替代文字",
+  "publishedAt": "2026-08-12",
+  "readingTime": "6 min read",
+  "relatedTool": null,
+  "relatedProduct": null,
+  "content": "<h2>第一個段落</h2><p>文章內容可使用簡單且可信任的 HTML。</p>",
+  "seoTitle": "範例文章 SEO 標題",
+  "metaDescription": "搜尋結果使用的文章描述。"
+}
