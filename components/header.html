@@ -1,0 +1,51 @@
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a href="./index.html" class="site-logo" aria-label="Aplus 首頁">
+      <span class="site-logo__fallback">Aplus</span>
+      <img
+        class="site-logo__image"
+        src="./assets/images/logo.jpg"
+        alt="Aplus"
+        hidden
+        onload="this.hidden=false;this.previousElementSibling.hidden=true"
+        onerror="this.hidden=true;this.previousElementSibling.hidden=false"
+      />
+    </a>
+
+    <nav class="site-nav" id="site-nav" aria-label="主要導覽">
+      <a href="./blog.html?category=AI">AI</a>
+      <a href="./blog.html?category=科技">科技</a>
+      <a href="./blog.html?category=影音">影音</a>
+      <a href="./blog.html?category=專業製作">專業製作</a>
+      <a href="./tools.html">工具</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="search-toggle" type="button" aria-label="搜尋文章" aria-controls="site-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"></circle>
+          <path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+        </svg>
+        <span>Search</span>
+      </button>
+      <button class="nav-toggle" type="button" aria-label="開啟選單" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="search-panel" id="site-search" role="dialog" aria-modal="true" aria-labelledby="search-title" hidden>
+  <div class="search-panel__dialog">
+    <div class="search-panel__header">
+      <h2 id="search-title">搜尋 Aplus 文章</h2>
+      <button class="search-close" type="button" aria-label="關閉搜尋">×</button>
+    </div>
+    <form class="search-form" role="search">
+      <input type="search" name="q" placeholder="輸入 SRT、字幕、Podcast…" autocomplete="off" />
+      <button type="submit">搜尋</button>
+    </form>
+    <div class="search-results" aria-live="polite"></div>
+  </div>
+</div>
+
