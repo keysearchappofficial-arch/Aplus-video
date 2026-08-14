@@ -1,188 +1,32 @@
 "use strict";
-
-const fs = require("node:fs");
-const path = require("node:path");
-
-const SITE_ORIGIN = "https://www.keysearch-app.com";
-const VALID_CATEGORIES = new Set(["AI", "科技", "影音", "專業製作", "工具"]);
-const root = path.resolve(__dirname, "../..");
-
-function fail(message) {
-  console.error("Publish failed: " + message);
-  process.exit(1);
-}
-
-function readJson(file) {
-  try {
-    return JSON.parse(fs.readFileSync(file, "utf8"));
-  } catch (error) {
-    fail("Cannot read article JSON: " + error.message);
-  }
-}
-
-function requiredText(data, key) {
-  const value = typeof data[key] === "string" ? data[key].trim() : "";
-  if (!value) fail(key + " is required");
-  return value;
-}
-
-function validate(data) {
-  const article = {
-    title: requiredText(data, "title"),
-    slug: requiredText(data, "slug"),
-    category: requiredText(data, "category"),
-    description: requiredText(data, "description"),
-    content: requiredText(data, "content"),
-    publishedAt: requiredText(data, "publishedAt"),
-    coverImage: requiredText(data, "coverImage"),
-    readingTime: requiredText(data, "readingTime"),
-    lead: String(data.lead || data.description || "").trim(),
-    coverAlt: String(data.coverAlt || data.title || "").trim(),
-    relatedTool: data.relatedTool || null,
-    relatedProduct: data.relatedProduct || null,
-    seoTitle: String(data.seoTitle || data.title || "").trim(),
-    metaDescription: String(data.metaDescription || data.description || "").trim()
-  };
-
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(article.slug)) {
-    fail("slug must use lowercase letters, numbers, and single hyphens only");
-  }
-  if (!VALID_CATEGORIES.has(article.category)) {
-    fail("category must be one of: " + Array.from(VALID_CATEGORIES).join(", "));
-  }
-  const parsedDate = new Date(article.publishedAt + "T00:00:00Z");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(article.publishedAt) ||
-      Number.isNaN(parsedDate.getTime()) ||
-      parsedDate.toISOString().slice(0, 10) !== article.publishedAt) {
-    fail("publishedAt must be a valid YYYY-MM-DD date");
-  }
-  if (article.relatedProduct && article.relatedProduct !== "nexuscut") {
-    fail("relatedProduct is not registered in the current product config");
-  }
-
-  return article;
-}
-
-function jsValue(value) {
-  return JSON.stringify(value);
-}
-
-function articleEntry(article) {
-  const image = article.coverImage.startsWith("./")
-    ? article.coverImage
-    : "./" + article.coverImage.replace(/^\/+/, "");
-
-  return [
-    "    makeArticle({",
-    "      slug: " + jsValue(article.slug) + ",",
-    "      relatedTool: " + jsValue(article.relatedTool) + ",",
-    "      relatedProduct: " + jsValue(article.relatedProduct) + ",",
-    "      category: " + jsValue(article.category) + ",",
-    "      title: " + jsValue(article.title) + ",",
-    "      description: " + jsValue(article.description) + ",",
-    "      lead: " + jsValue(article.lead) + ",",
-    "      date: " + jsValue(article.publishedAt.replaceAll("-", ".")) + ",",
-    "      readingTime: " + jsValue(article.readingTime) + ",",
-    "      image: " + jsValue(image) + ",",
-    "      alt: " + jsValue(article.coverAlt) + ",",
-    "      seoTitle: " + jsValue(article.seoTitle) + ",",
-    "      metaDescription: " + jsValue(article.metaDescription) + ",",
-    "      intro: " + jsValue(article.description) + ",",
-    "      sections: [],",
-    "      extra: " + jsValue(article.content),
-    "    })"
-  ].join("\n");
-}
-
-function htmlEscape(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-}
-
-function buildHtml(template, article) {
-  return template
-    .replaceAll("{{SLUG}}", htmlEscape(article.slug))
-    .replaceAll("{{TITLE}}", htmlEscape(article.seoTitle))
-    .replaceAll("{{DESCRIPTION}}", htmlEscape(article.metaDescription));
-}
-
-function main() {
-  const inputArg = process.argv[2];
-  const dryRun = process.argv.includes("--dry-run");
-  if (!inputArg) {
-    fail("Usage: node scripts/article-publisher/publish-article.js <article.json> [--dry-run]");
-  }
-
-  const inputPath = path.resolve(process.cwd(), inputArg);
-  const article = validate(readJson(inputPath));
-  const routeDir = path.join(root, "article", article.slug);
-  const contentPath = path.join(root, "assets", "js", "content-data.js");
-  const sitemapPath = path.join(root, "sitemap-articles.xml");
-  const templatePath = path.join(__dirname, "article-template.html");
-
-  if (fs.existsSync(routeDir)) fail("Article already exists: " + article.slug);
-
-  const originalContent = fs.readFileSync(contentPath, "utf8");
-  const originalSitemap = fs.readFileSync(sitemapPath, "utf8");
-  const template = fs.readFileSync(templatePath, "utf8");
-
-  if (originalContent.includes('slug: "' + article.slug + '"')) {
-    fail("Article already exists in content-data.js: " + article.slug);
-  }
-
-  const contentMarker = "\n  ];";
-  const contentIndex = originalContent.lastIndexOf(contentMarker);
-  if (contentIndex < 0) fail("content-data.js insertion marker not found");
-  if (!originalSitemap.includes("</urlset>")) fail("sitemap closing tag not found");
-
-  const newContent =
-    originalContent.slice(0, contentIndex) +
-    ",\n" + articleEntry(article) +
-    originalContent.slice(contentIndex);
-
-  const sitemapEntry =
-    '  <url><loc>' + SITE_ORIGIN + '/article/' + article.slug +
-    '/</loc><lastmod>' + article.publishedAt + '</lastmod></url>\n';
-  const newSitemap = originalSitemap.replace("</urlset>", sitemapEntry + "</urlset>");
-  const newHtml = buildHtml(template, article);
-
-  if (dryRun) {
-    console.log("Validation passed (dry run)");
-    console.log("Route: article/" + article.slug + "/index.html");
-    console.log("No files changed.");
-    return;
-  }
-
-  const tempContent = contentPath + ".tmp-" + process.pid;
-  const tempSitemap = sitemapPath + ".tmp-" + process.pid;
-  const tempRoute = path.join(root, "article", "." + article.slug + ".tmp-" + process.pid);
-
-  try {
-    fs.writeFileSync(tempContent, newContent, "utf8");
-    fs.writeFileSync(tempSitemap, newSitemap, "utf8");
-    fs.mkdirSync(tempRoute, { recursive: false });
-    fs.writeFileSync(path.join(tempRoute, "index.html"), newHtml, "utf8");
-
-    fs.renameSync(tempContent, contentPath);
-    fs.renameSync(tempSitemap, sitemapPath);
-    fs.renameSync(tempRoute, routeDir);
-
-    console.log("Published: " + article.title);
-    console.log("Route: article/" + article.slug + "/index.html");
-    console.log("Updated: assets/js/content-data.js");
-    console.log("Updated: sitemap-articles.xml");
-  } catch (error) {
-    try { fs.writeFileSync(contentPath, originalContent, "utf8"); } catch (_) {}
-    try { fs.writeFileSync(sitemapPath, originalSitemap, "utf8"); } catch (_) {}
-    try { if (fs.existsSync(tempContent)) fs.unlinkSync(tempContent); } catch (_) {}
-    try { if (fs.existsSync(tempSitemap)) fs.unlinkSync(tempSitemap); } catch (_) {}
-    try { if (fs.existsSync(tempRoute)) fs.rmSync(tempRoute, { recursive: true }); } catch (_) {}
-    try { if (fs.existsSync(routeDir)) fs.rmSync(routeDir, { recursive: true }); } catch (_) {}
-    fail(error.message);
-  }
-}
-
+const fs=require("node:fs"),path=require("node:path");
+const SITE_ORIGIN="https://www.keysearch-app.com",VALID_CATEGORIES=new Set(["AI","科技","影音","專業製作","工具"]),root=path.resolve(__dirname,"../..");
+function fail(message){console.error("Publish failed: "+message);process.exit(1)}
+function readJson(file){try{return JSON.parse(fs.readFileSync(file,"utf8"))}catch(error){fail("Cannot read article JSON: "+error.message)}}
+function requiredText(data,key){const value=typeof data[key]==="string"?data[key].trim():"";if(!value)fail(key+" is required");return value}
+function validate(data){const article={title:requiredText(data,"title"),slug:requiredText(data,"slug"),category:requiredText(data,"category"),description:requiredText(data,"description"),content:requiredText(data,"content"),publishedAt:requiredText(data,"publishedAt"),coverImage:requiredText(data,"coverImage"),readingTime:requiredText(data,"readingTime"),lead:String(data.lead||data.description||"").trim(),coverAlt:String(data.coverAlt||data.title||"").trim(),relatedTool:data.relatedTool||null,relatedProduct:data.relatedProduct||null,seoTitle:String(data.seoTitle||data.title||"").trim(),metaDescription:String(data.metaDescription||data.description||"").trim()};
+if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(article.slug))fail("slug must use lowercase letters, numbers, and single hyphens only");
+if(!VALID_CATEGORIES.has(article.category))fail("category must be one of: "+Array.from(VALID_CATEGORIES).join(", "));
+const parsed=new Date(article.publishedAt+"T00:00:00Z");if(!/^\d{4}-\d{2}-\d{2}$/.test(article.publishedAt)||Number.isNaN(parsed.getTime())||parsed.toISOString().slice(0,10)!==article.publishedAt)fail("publishedAt must be a valid YYYY-MM-DD date");
+if(article.relatedProduct&&article.relatedProduct!=="nexuscut")fail("relatedProduct is not registered in the current product config");return article}
+const jsValue=value=>JSON.stringify(value);
+function articleEntry(a){const image=a.coverImage.startsWith("./")?a.coverImage:"./"+a.coverImage.replace(/^\/+/, "");return["    makeArticle({","      slug: "+jsValue(a.slug)+",","      relatedTool: "+jsValue(a.relatedTool)+",","      relatedProduct: "+jsValue(a.relatedProduct)+",","      category: "+jsValue(a.category)+",","      title: "+jsValue(a.title)+",","      description: "+jsValue(a.description)+",","      lead: "+jsValue(a.lead)+",","      date: "+jsValue(a.publishedAt.replaceAll("-","."))+",","      readingTime: "+jsValue(a.readingTime)+",","      image: "+jsValue(image)+",","      alt: "+jsValue(a.coverAlt)+",","      seoTitle: "+jsValue(a.seoTitle)+",","      metaDescription: "+jsValue(a.metaDescription)+",","      intro: "+jsValue(a.description)+",","      sections: [],","      extra: "+jsValue(a.content)+",","    })"].join("\n")}
+function articleBlocks(source){const blocks=[],token="makeArticle(";let cursor=0;while((cursor=source.indexOf(token,cursor))>=0){const open=cursor+token.length-1;let depth=0,quote="",escaped=false,line=false,block=false,end=-1;for(let i=open;i<source.length;i+=1){const ch=source[i],next=source[i+1];if(line){if(ch==="\n")line=false;continue}if(block){if(ch==="*"&&next==="/"){block=false;i+=1}continue}if(quote){if(escaped)escaped=false;else if(ch==="\\")escaped=true;else if(ch===quote)quote="";continue}if(ch==="/"&&next==="/"){line=true;i+=1;continue}if(ch==="/"&&next==="*"){block=true;i+=1;continue}if(ch==='"'||ch==="'"||ch==="`"){quote=ch;continue}if(ch==="(")depth+=1;if(ch===")"){depth-=1;if(depth===0){end=i+1;break}}}if(end<0)fail("content-data.js contains an unterminated makeArticle block");blocks.push({start:cursor,end,text:source.slice(cursor,end)});cursor=end}return blocks}
+function matches(source,slug){return articleBlocks(source).filter(block=>{const found=block.text.match(/\bslug\s*:\s*"([^"]+)"/);return found&&found[1]===slug})}
+function escapeRegExp(value){return value.replace(/[.*+?^$()|[\]\\{}]/g,"\\$&")}
+function sitemapEntries(source,slug){const url=SITE_ORIGIN+"/article/"+slug+"/",pattern=new RegExp("<url>\\s*<loc>"+escapeRegExp(url)+"<\\/loc>\\s*<lastmod>([^<]+)<\\/lastmod>\\s*<\\/url>","g");return Array.from(source.matchAll(pattern)).map(m=>({start:m.index,end:m.index+m[0].length,lastmod:m[1],text:m[0]}))}
+function detect(route,content,sitemap,slug){const routeCount=fs.existsSync(route)&&fs.statSync(route).isFile()?1:0,contentMatches=matches(content,slug),siteMatches=sitemapEntries(sitemap,slug);if(routeCount===0&&contentMatches.length===0&&siteMatches.length===0)return{mode:"create",contentMatches,sitemapMatches:siteMatches};if(routeCount===1&&contentMatches.length===1&&siteMatches.length===1)return{mode:"update",contentMatches,sitemapMatches:siteMatches};fail("Inconsistent existing article state for slug: "+slug+" (route="+routeCount+", content-data="+contentMatches.length+", sitemap="+siteMatches.length+"). Manual review required.")}
+const htmlEscape=value=>String(value).replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+const buildHtml=(template,a)=>template.replaceAll("{{SLUG}}",htmlEscape(a.slug)).replaceAll("{{TITLE}}",htmlEscape(a.seoTitle)).replaceAll("{{DESCRIPTION}}",htmlEscape(a.metaDescription));
+function buildContent(original,a,state){const entry=articleEntry(a);let updated;if(state.mode==="update"){const b=state.contentMatches[0];updated=original.slice(0,b.start)+entry.trimStart()+original.slice(b.end)}else{const marker="\n  ];",i=original.lastIndexOf(marker);if(i<0)fail("content-data.js insertion marker not found");updated=original.slice(0,i)+",\n"+entry+original.slice(i)}if(matches(updated,a.slug).length!==1)fail("content-data.js must contain exactly one matching slug after publish");return updated}
+function buildSitemap(original,a,state){const entry="  <url><loc>"+SITE_ORIGIN+"/article/"+a.slug+"/</loc><lastmod>"+a.publishedAt+"</lastmod></url>";let updated;if(state.mode==="update"){const current=state.sitemapMatches[0];updated=original.slice(0,current.start)+entry.trimStart()+original.slice(current.end)}else{if(!original.includes("</urlset>"))fail("sitemap closing tag not found");updated=original.replace("</urlset>",entry+"\n</urlset>")}if(sitemapEntries(updated,a.slug).length!==1)fail("sitemap must contain exactly one matching URL after publish");return updated}
+function replaceTemp(temp,target){try{fs.renameSync(temp,target)}catch(_){fs.copyFileSync(temp,target);fs.unlinkSync(temp)}}
+function main(){const arg=process.argv[2],dry=process.argv.includes("--dry-run");if(!arg)fail("Usage: node scripts/article-publisher/publish-article.js <article.json> [--dry-run]");
+const input=path.resolve(process.cwd(),arg),a=validate(readJson(input)),routeDir=path.join(root,"article",a.slug),route=path.join(routeDir,"index.html"),contentPath=path.join(root,"assets","js","content-data.js"),sitemapPath=path.join(root,"sitemap-articles.xml"),templatePath=path.join(__dirname,"article-template.html");
+const originalContent=fs.readFileSync(contentPath,"utf8"),originalSitemap=fs.readFileSync(sitemapPath,"utf8"),template=fs.readFileSync(templatePath,"utf8"),state=detect(route,originalContent,originalSitemap,a.slug),originalHtml=state.mode==="update"?fs.readFileSync(route,"utf8"):null,newContent=buildContent(originalContent,a,state),newSitemap=buildSitemap(originalSitemap,a,state),newHtml=buildHtml(template,a);
+console.log("Mode: "+state.mode.toUpperCase());if(dry){console.log("Validation passed (dry run)");console.log("Route: article/"+a.slug+"/index.html");console.log("No files changed.");return}
+const suffix=".tmp-"+process.pid,tempContent=contentPath+suffix,tempSitemap=sitemapPath+suffix,tempHtml=route+suffix,tempRoute=path.join(root,"article","."+a.slug+suffix);
+try{fs.writeFileSync(tempContent,newContent,"utf8");fs.writeFileSync(tempSitemap,newSitemap,"utf8");if(state.mode==="create"){fs.mkdirSync(tempRoute,{recursive:false});fs.writeFileSync(path.join(tempRoute,"index.html"),newHtml,"utf8")}else fs.writeFileSync(tempHtml,newHtml,"utf8");replaceTemp(tempContent,contentPath);replaceTemp(tempSitemap,sitemapPath);if(state.mode==="create")fs.renameSync(tempRoute,routeDir);else replaceTemp(tempHtml,route);
+const finalState=detect(route,fs.readFileSync(contentPath,"utf8"),fs.readFileSync(sitemapPath,"utf8"),a.slug);if(finalState.mode!=="update")fail("Publisher post-write verification failed");console.log((state.mode==="create"?"Published: ":"Updated: ")+a.title);console.log("Route: article/"+a.slug+"/index.html");console.log("Updated: assets/js/content-data.js");console.log("Updated: sitemap-articles.xml")}
+catch(error){try{fs.writeFileSync(contentPath,originalContent,"utf8")}catch(_){}try{fs.writeFileSync(sitemapPath,originalSitemap,"utf8")}catch(_){}try{if(state.mode==="update"&&originalHtml!==null)fs.writeFileSync(route,originalHtml,"utf8")}catch(_){}for(const file of[tempContent,tempSitemap,tempHtml])try{if(fs.existsSync(file))fs.unlinkSync(file)}catch(_){}try{if(fs.existsSync(tempRoute))fs.rmSync(tempRoute,{recursive:true})}catch(_){}try{if(state.mode==="create"&&fs.existsSync(routeDir))fs.rmSync(routeDir,{recursive:true})}catch(_){}fail(error.message)}}
 main();
