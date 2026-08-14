@@ -15,6 +15,8 @@
   const articles = [
     makeArticle({
       slug: "what-is-srt",
+      relatedTool: "srt-url-generator",
+      relatedProduct: "nexuscut",
       category: "專業製作",
       title: "SRT 是什麼？Listener、Caller 與 Rendezvous 一次搞懂",
       description: "搞懂 SRT 最容易混淆的三種連線模式，讓直播與遠端傳輸設定更穩定。",
@@ -23,14 +25,11 @@
       readingTime: "6 min read",
       image: "./assets/images/solutions/corporate-live.jpg",
       alt: "專業直播與 SRT 遠端影像傳輸工作環境",
-      intro: "SRT 是 Secure Reliable Transport 的縮寫，主要用來在不穩定或延遲波動的網路上傳送高品質影音。它常見於遠端製作、跨地直播、攝影機回傳與節目訊號交換。",
-      sections: [
-        ["先理解：誰主動建立連線", "設定 SRT 時，最重要的不是先背 URL，而是先確認哪一端可以被外部連入、哪一端需要主動連線。防火牆、固定 IP 與 Port Forwarding 都會影響選擇。"],
-        ["Listener", "Listener 會在指定 Port 等待連線，適合具備公開 IP 或已完成 Port Forwarding 的接收端。"],
-        ["Caller", "Caller 會主動連向 Listener。多數攝影現場位於 NAT 後方，因此常由現場端擔任 Caller。"],
-        ["Rendezvous", "Rendezvous 讓兩端同時嘗試建立連線，適合雙方都在 NAT 後方的情況，但不應把它當成萬用模式。"]
-      ],
-      extra: "<blockquote>實務上先以 Listener + Caller 建立可預測的連線，只有在網路條件需要時才考慮 Rendezvous。</blockquote><h2>SRT URL 範例</h2><pre><code>srt://203.0.113.10:9000?mode=caller&amp;latency=120000</code></pre><p>設定完成後，仍要檢查封包遺失、實際延遲與解碼狀態，不能只看「已連線」。</p>"
+      seoTitle: "123",
+      metaDescription: "233",
+      intro: "搞懂 SRT 最容易混淆的三種連線模式，讓直播與遠端傳輸設定更穩定。",
+      sections: [],
+      extra: "<p>SRT 是 的縮寫，主要用來在不穩定或延遲波動的網路上傳送高品質影音。它常見於遠端製作、跨地直播、攝影機回傳與節目訊號交換。</p><h2>先理解：誰主動建立連線</h2><p>設定 SRT 時，最重要的不是先背 URL，而是先確認哪一端可以被外部連入、哪一端需要主動連線。防火牆、固定 IP 與 Port Forwarding 都會影響選擇。</p><h2>Listener</h2><p>Listener 會在指定 Port 等待連線，適合具備公開 IP 或已完成 Port Forwarding 的接收端。</p><h2>Caller</h2><p>Caller 會主動連向 Listener。多數攝影現場位於 NAT 後方，因此常由現場端擔任 Caller。</p><h2>Rendezvous</h2><p>Rendezvous 讓兩端同時嘗試建立連線，適合雙方都在 NAT 後方的情況，但不應把它當成萬用模式。</p><blockquote>實務上先以 Listener + Caller 建立可預測的連線，只有在網路條件需要時才考慮 Rendezvous。</blockquote><h2>SRT URL 範例</h2><pre><code>srt://203.0.113.10:9000?mode=caller&amp;latency=120000</code></pre><p>設定完成後，仍要檢查封包遺失、實際延遲與解碼狀態，不能只看「已連線」。</p>",
     }),
     makeArticle({
       slug: "obs-receive-srt",
